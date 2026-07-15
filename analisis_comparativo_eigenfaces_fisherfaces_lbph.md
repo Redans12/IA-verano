@@ -45,7 +45,148 @@ Independientemente de mis resultados, estos tres modelos ya tienen diferencias c
 * **Fisherfaces** se creó precisamente como mejora para ese problema. En lugar de solo buscar dónde varían más las imágenes, busca lo que mejor separa a una persona de otra, por lo que resiste mejor los cambios de iluminación y de expresión. Eso sí, necesita varias imágenes por persona para funcionar bien; con pocas muestras se comporta casi igual que Eigenfaces.
 * **LBPH** es el que mejor aguanta la iluminación en la práctica, porque no compara el brillo de los píxeles directamente, sino que compara cada píxel contra sus vecinos (si es más claro o más oscuro que ellos). Si toda la imagen se aclara u oscurece de manera pareja, esas comparaciones locales casi no cambian. Por eso es el más usado para tiempo real y para equipos con pocos recursos.
 
-## 6\. Conclusión
+## 6\. Código utilizado
+
+Para la comparación modifiqué el flujo de entrenamiento: en lugar de entrenar un solo modelo con todas las imágenes, se separan los archivos en entrenamiento y prueba según el sufijo del nombre, se entrenan los tres modelos con el mismo conjunto y se evalúan contra las mismas imágenes de prueba, contando aciertos y midiendo el tiempo de cada uno.
+
+```python
+import cv2 as cv
+import numpy as np
+import os
+import time
+
+data\_set = "img\\\\caras"
+TAMANO = (100, 100)
+
+SUFIJOS\_TRAIN = \["\_orig.jpg", "\_rot15.jpg", "\_rotneg15.jpg", "\_trasladada.jpg", "\_escalada.jpg"]
+SUFIJOS\_TEST = \["\_brillomas.jpg", "\_brillomenos.jpg"]
+
+
+def separar\_train\_test(data\_set):
+    personas = sorted(
+        d for d in os.listdir(data\_set)
+        if os.path.isdir(os.path.join(data\_set, d))
+    )
+
+    train\_paths = \[]
+    train\_labels = \[]
+    test\_paths = \[]
+    test\_labels = \[]
+    label = 0
+
+    for persona in personas:
+        persona\_path = os.path.join(data\_set, persona)
+        archivos = os.listdir(persona\_path)
+
+        for archivo in archivos:
+            ruta = os.path.join(persona\_path, archivo)
+
+            if any(archivo.endswith(suf) for suf in SUFIJOS\_TRAIN):
+                train\_paths.append(ruta)
+                train\_labels.append(label)
+            elif any(archivo.endswith(suf) for suf in SUFIJOS\_TEST):
+                test\_paths.append(ruta)
+                test\_labels.append(label)
+
+        print(f"{persona} (label={label}): train={train\_labels.count(label)}, test={test\_labels.count(label)}")
+        label += 1
+
+    return train\_paths, train\_labels, test\_paths, test\_labels, personas
+
+
+def cargar\_imagenes(paths):
+    imagenes = \[]
+    for p in paths:
+        img = cv.imread(p, 0)
+        if img is None:
+            continue
+        img = cv.resize(img, TAMANO)
+        imagenes.append(img)
+    return imagenes
+
+
+def entrenar\_y\_evaluar(nombre\_modelo, crear\_modelo, train\_data, train\_labels, test\_data, test\_labels):
+    print(f"\\n--- {nombre\_modelo} ---")
+
+    inicio = time.time()
+    modelo = crear\_modelo()
+    modelo.train(train\_data, np.array(train\_labels))
+    tiempo\_entrenamiento = time.time() - inicio
+    print(f"Entrenado en {tiempo\_entrenamiento:.1f} segundos")
+
+    aciertos = 0
+    confianzas\_correctas = \[]
+    confianzas\_incorrectas = \[]
+
+    for img, label\_real in zip(test\_data, test\_labels):
+        label\_predicho, confianza = modelo.predict(img)
+
+        if label\_predicho == label\_real:
+            aciertos += 1
+            confianzas\_correctas.append(confianza)
+        else:
+            confianzas\_incorrectas.append(confianza)
+
+    total = len(test\_data)
+    porcentaje\_acierto = (aciertos / total) \* 100 if total > 0 else 0
+
+    print(f"Aciertos: {aciertos}/{total} ({porcentaje\_acierto:.1f}%)")
+
+    if confianzas\_correctas:
+        print(f"Confianza promedio cuando acertó: {np.mean(confianzas\_correctas):.1f}")
+    if confianzas\_incorrectas:
+        print(f"Confianza promedio cuando falló: {np.mean(confianzas\_incorrectas):.1f}")
+
+    return {
+        "modelo": nombre\_modelo,
+        "porcentaje\_acierto": porcentaje\_acierto,
+        "tiempo\_entrenamiento": tiempo\_entrenamiento,
+    }
+
+
+if \_\_name\_\_ == "\_\_main\_\_":
+    train\_paths, train\_labels, test\_paths, test\_labels, personas = separar\_train\_test(data\_set)
+
+    REDUCIR\_TRAIN = 6
+    if REDUCIR\_TRAIN > 1:
+        train\_paths = train\_paths\[::REDUCIR\_TRAIN]
+        train\_labels = train\_labels\[::REDUCIR\_TRAIN]
+
+    train\_data = cargar\_imagenes(train\_paths)
+    test\_data = cargar\_imagenes(test\_paths)
+
+    resultados = \[]
+
+    resultados.append(entrenar\_y\_evaluar(
+        "Eigenfaces",
+        lambda: cv.face.EigenFaceRecognizer\_create(num\_components=50),
+        train\_data, train\_labels, test\_data, test\_labels
+    ))
+
+    resultados.append(entrenar\_y\_evaluar(
+        "Fisherfaces",
+        cv.face.FisherFaceRecognizer\_create,
+        train\_data, train\_labels, test\_data, test\_labels
+    ))
+
+    resultados.append(entrenar\_y\_evaluar(
+        "LBPH",
+        cv.face.LBPHFaceRecognizer\_create,
+        train\_data, train\_labels, test\_data, test\_labels
+    ))
+
+    print("\\n\\n========== RESUMEN COMPARATIVO ==========")
+    print(f"{'Modelo':<15} {'% Acierto':<12} {'Tiempo (s)':<12}")
+    for r in resultados:
+        print(f"{r\['modelo']:<15} {r\['porcentaje\_acierto']:<12.1f} {r\['tiempo\_entrenamiento']:<12.1f}")
+```
+
+Notas sobre el código:
+
+* El train se reduce tomando 1 de cada 6 imágenes (`REDUCIR\_TRAIN = 6`) y el tamaño se bajó a 100x100 porque Eigenfaces tardaba demasiado con el dataset completo en 150x150. El conjunto de prueba se dejó completo para que el porcentaje de acierto fuera representativo.
+* A Eigenfaces se le limitó a 50 componentes (`num\_components=50`) para acelerar el cálculo, ya que sin ese límite calcula todos los componentes posibles y el entrenamiento se alarga mucho.
+
+## 7\. Conclusión
 
 Mi experimento, aunque limitado porque el cambio de brillo fue generado por código y no con luz real, va en la misma dirección que lo que ya se sabe de estos modelos: LBPH fue el más eficiente por mucho en tiempo y sin perder exactitud, Eigenfaces fue el único con fallos (siendo el más sensible a iluminación de los tres), y Fisherfaces quedó en medio, con buena exactitud pero el entrenamiento más lento. Si tuviera que elegir uno para un sistema real con cambios de luz, elegiría LBPH por su velocidad y resistencia a la iluminación. Como siguiente paso, la prueba se podría repetir con fotos tomadas con iluminación real distinta para confirmar estos resultados en condiciones más exigentes.
 
