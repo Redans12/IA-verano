@@ -1,0 +1,25 @@
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Archivos de video y dataset
+*.mp4
+*.avi
+*.mov
+
+# Modelos entrenados y cascadas en XML
+*.xml
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+cladificador haar cascade.py
+comparar modelos.py
+dataset phaser arbol.py
+entrenar eigenface.py
+iris k-vecinos.py
