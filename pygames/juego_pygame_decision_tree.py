@@ -241,7 +241,7 @@ class Juego:
             return "No hay datos para exportar."
 
         base = os.path.dirname(__file__)
-        ruta = os.path.join(base, "datos_decision_tree_desvalanceado.csv")
+        ruta = os.path.join(base, "juegolargo_juego_20-07.csv")
 
         try:
             with open(ruta, "w", newline="", encoding="utf-8") as f:
@@ -252,7 +252,7 @@ class Juego:
         except Exception as e:
             return f"Error al guardar CSV: {e}"
 
-        return f"CSV guardado en datos_decision_tree_desvalanceado.csv ({len(self.datos_modelo)} filas)."
+        return f"CSV guardado en juegolargo_juego_20-07.csv ({len(self.datos_modelo)} filas)."
 
     def graficar_datos_2d(self) -> str:
         """

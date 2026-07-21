@@ -1,0 +1,12 @@
+cuenta_id,seguidores,cuenta_dias,tweets_por_hora,pct_retweet,hora_pico,sim_max_con_rumor,diversidad_lexica,etiqueta
+@info_rapida_01,12,3,38,0.9,2.5,0.97,0.12,
+@alertas_edu_02,8,2,42,0.88,3.1,0.95,0.1,
+@noticias_ya_03,15,4,35,0.91,2.8,0.93,0.14,
+@flash_campus_04,6,1,60,0.94,2.0,0.96,0.09,
+@viral_edu_05,11,2,48,0.89,3.5,0.94,0.11,
+@luna_mx,340,1200,2,0.2,13.0,0.88,0.55,
+@diego_campus,890,800,4,0.3,18.0,0.72,0.62,
+@vale_ia,1200,950,3,0.25,17.0,0.68,0.7,
+@omar_verifica,2100,2000,1.5,0.15,11.0,0.35,0.75,
+@sofia_comedor,450,600,2,0.22,12.0,0.2,0.6,
+@rectoria_iti,5000,3000,1,0.1,10.0,0.25,0.8,

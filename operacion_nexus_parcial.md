@@ -1,4 +1,3 @@
-
 # Table of Contents
 
 1.  [Operación Nexus — Acertijos de Inteligencia Artificial](#orgeb47126)
@@ -43,7 +42,7 @@ es **pensar** como analistas de IA.
 
 ## Reglas del juego (acertijos)
 
-1.  **Individual.** Sin copiar respuestas literales de un compañero o de un LLM.
+1.  **Individual.** Sin copiar respuestas literales de un compañero
 2.  **Conclusión + justificación.** Si aciertan pero no explican el razonamiento, la pregunta vale 0.
 3.  **Una solución coherente con todas las pistas.** Si una pieza no encaja con el resto, revisen.
 4.  **No entrenar modelos.** Calculadora y cuentas a mano sí. Python solo para aritmética si quieren.
